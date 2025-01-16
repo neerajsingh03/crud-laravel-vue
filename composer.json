@@ -67,14 +67,7 @@
             "php-http/discovery": true
         }
     },
-    "repositories": [
-        {
-            "packagist": {
-            "url": "https://repo.packagist.org"
-            }
-        }
-    ],
+    "repositories": [],
     "minimum-stability": "stable",
     "prefer-stable": true
-    
 }
