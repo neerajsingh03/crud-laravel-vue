@@ -6,18 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use Hash;
+use Auth;
 class AuthController extends Controller
 {
     public function storeUser(Request $request)
     {
-        if($request->id){
-            $validator = Validator::make($request->all(), [
-                'name' => 'required',
-                'email' => 'required',
-            ]);
-            $user = User::findOrFail($request->id);
-            return response()->json(['user' => $user]);
-        }
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required',
@@ -33,9 +27,11 @@ class AuthController extends Controller
         $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = $request->password;
+        $user->password = Hash::make($request->password);
+        $user->role     = "user";
         $user->save();
-        return response()->json(['success'=> 'User register successfully'],200);
+        $token = $user->createToken('auth_token')->plainTextToken;
+        return response()->json(['success'=> 'User register successfully','token' => $token,'role' => $user->role],200);
 
     }
     public function index()
@@ -71,5 +67,36 @@ class AuthController extends Controller
             $user->delete();
             return response()->json(['success' => 'user remove successfully']);
         }
+    }
+    public function login(Request $request)
+    {
+       $validate = Validator::make($request->all(),[
+        'email' => 'required',
+        'password'  =>  'required',
+       ]);
+       if($validate->fails()){
+            return response()->json([
+               'success' => false,
+               'message' => 'validation error',
+               'error'  =>  $validate->errors(),
+            ],422);
+       };
+       $credential = $request->only('email','password');
+       if(!Auth::attempt($credential)){
+         return response()->json(['message' => 'Invalid login details'],401);
+       }
+       $user = Auth::user();
+       $token = $user->createToken('login_token')->plainTextToken;
+       return response()->json(['message' => 'Login successfully','token' =>$token,'role' => $user->role]);
+
+    }
+    public function logout(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $user->tokens()->delete();
+        return response()->json(['success' => 'Logout successfully'], 200);
     }
 }
