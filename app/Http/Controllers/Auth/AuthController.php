@@ -34,10 +34,23 @@ class AuthController extends Controller
         return response()->json(['success'=> 'User register successfully','token' => $token,'role' => $user->role],200);
 
     }
-    public function index()
+    public function index($id)
     {
-        $users = User::all();
-        return response()->json(['users' => $users , 'success' => 'Users get successfully']);
+        // $users = User::all();
+        // return response()->json(['users' => $users , 'success' => 'Users get successfully']);
+        // $userId = auth()->user()->id;
+        // if(!$userId){
+        //     return response()->json(['error' => 'User not found'],404);
+        // }
+      
+        if(!$id){
+            return response()->json(['error' => 'User not found'],404);
+        }
+        $user = User::findOrFail($id);
+        if(!$user){
+            return response()->json(['error' => 'User not found'],404);
+        }
+        return response()->json(['users' => $user , 'success' => 'Users get successfully']);
     }
     public function editUser($id)
     {
@@ -87,7 +100,7 @@ class AuthController extends Controller
        }
        $user = Auth::user();
        $token = $user->createToken('login_token')->plainTextToken;
-       return response()->json(['message' => 'Login successfully','token' =>$token,'role' => $user->role]);
+       return response()->json(['message' => 'Login successfully','token' =>$token,'role' => $user->role,'userId' =>$user->id]);
 
     }
     public function logout(Request $request)
